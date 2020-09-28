@@ -21,9 +21,10 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         func loadAnchor() {
             leftHandGlove = try! Experience.loadLeftHand()
-            arView.scene.addAnchor(leftHandAnchor)
             rightHandGlove = try! Experience.loadRightHand()
-            arView.scene.addAnchor(rightHandGlove)
+
+            arView.scene.addAnchor(leftHandAnchor)
+            arView.scene.addAnchor(rightHandAnchor)
         }
         super.viewDidLoad()
         loadAnchor()

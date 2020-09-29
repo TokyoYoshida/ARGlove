@@ -9,14 +9,18 @@
 import UIKit
 import RealityKit
 import ARKit
+import ReplayKit
 
 class ViewController: UIViewController {
     
     @IBOutlet var arView: ARView!
+    @IBOutlet weak var button: UIButton!
+    
     let leftHandAnchor = AnchorEntity()
     let rightHandAnchor = AnchorEntity()
     var leftHandGlove: Experience.LeftHand!
     var rightHandGlove: Experience.RightHand!
+    var nowRecording: Bool = false
 
     override func viewDidLoad() {
         func loadAnchor() {
@@ -45,6 +49,18 @@ class ViewController: UIViewController {
         super.viewDidAppear(animated)
         configureARKit()
     }
+    
+    @IBAction func tappedButton(_ sender: Any) {
+        if nowRecording {
+            nowRecording = false
+            button.setTitle("Start", for: .normal)
+            stopRecording()
+        } else {
+            nowRecording = true
+            button.setTitle("Stop", for: .normal)
+            startRecording()
+        }
+    }
 }
 
 extension ViewController: ARSessionDelegate{
@@ -62,6 +78,35 @@ extension ViewController: ARSessionDelegate{
             leftHandAnchor.transform = Transform(matrix: leftHandTrans)
             let rightHandTrans = bodyAnchor.transform * rightHandTransform
             rightHandAnchor.transform = Transform(matrix: rightHandTrans)
+        }
+    }
+}
+
+extension ViewController {
+    func startRecording() {
+        guard !RPScreenRecorder.shared().isRecording else { return }
+        RPScreenRecorder.shared().startRecording(handler: { (error) in
+            if let error = error {
+                debugPrint(#function, "recording something failed", error)
+            }
+        })
+    }
+
+    func stopRecording() {
+        guard RPScreenRecorder.shared().isRecording else { return }
+        RPScreenRecorder.shared().stopRecording(handler: { (previewViewController, error) in
+            guard let previewViewController = previewViewController else { return }
+            previewViewController.previewControllerDelegate = self
+
+            self.present(previewViewController, animated: true, completion: nil)
+        })
+    }
+}
+
+extension ViewController: RPPreviewViewControllerDelegate {
+    func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
+        DispatchQueue.main.async {
+            previewController.dismiss(animated: true, completion: nil)
         }
     }
 }
